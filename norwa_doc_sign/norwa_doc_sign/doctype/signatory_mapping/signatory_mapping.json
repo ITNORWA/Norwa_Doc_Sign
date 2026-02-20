@@ -1,0 +1,96 @@
+{
+    "actions": [],
+    "allow_events_in_timeline": 0,
+    "allow_header_display": 0,
+    "allow_import": 0,
+    "allow_rename": 1,
+    "autoname": "field:doctype_name",
+    "creation": "2026-02-20 12:10:00.000000",
+    "doctype": "DocType",
+    "editable_grid": 1,
+    "engine": "InnoDB",
+    "field_order": [
+        "doctype_name",
+        "mappings_section",
+        "created_by_field",
+        "approved_by_field",
+        "requested_by_field",
+        "column_break_5",
+        "created_at_field",
+        "approved_at_field",
+        "requested_at_field"
+    ],
+    "fields": [
+        {
+            "fieldname": "doctype_name",
+            "fieldtype": "Link",
+            "label": "DocType Name",
+            "options": "DocType",
+            "reqd": 1,
+            "unique": 1
+        },
+        {
+            "fieldname": "mappings_section",
+            "fieldtype": "Section Break",
+            "label": "Mappings"
+        },
+        {
+            "fieldname": "created_by_field",
+            "fieldtype": "Data",
+            "label": "Created By Field (User/Employee)"
+        },
+        {
+            "fieldname": "approved_by_field",
+            "fieldtype": "Data",
+            "label": "Approved By Field"
+        },
+        {
+            "fieldname": "requested_by_field",
+            "fieldtype": "Data",
+            "label": "Requested By Field"
+        },
+        {
+            "fieldname": "column_break_5",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "created_at_field",
+            "fieldtype": "Data",
+            "label": "Created At Field (Date/Time)"
+        },
+        {
+            "fieldname": "approved_at_field",
+            "fieldtype": "Data",
+            "label": "Approved At Field"
+        },
+        {
+            "fieldname": "requested_at_field",
+            "fieldtype": "Data",
+            "label": "Requested At Field"
+        }
+    ],
+    "index_web_pages_for_search": 1,
+    "links": [],
+    "modified": "2026-02-20 12:10:00.000000",
+    "modified_by": "Administrator",
+    "module": "Norwa Doc Sign",
+    "name": "Signatory Mapping",
+    "owner": "Administrator",
+    "permissions": [
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "System Manager",
+            "share": 1,
+            "write": 1
+        }
+    ],
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": []
+}

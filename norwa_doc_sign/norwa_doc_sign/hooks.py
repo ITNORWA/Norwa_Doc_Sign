@@ -5,6 +5,10 @@ app_description = "Frappe app for document signing and stamping with auto-fill a
 app_email = "it-department@norwaafrica.com"
 app_license = "mit"
 
+app_include_js = [
+    "/assets/norwa_doc_sign/js/form_ext.js"
+]
+
 # DocType Class Hooks
 # doctype_js = {"DocType" : "public/js/doctype_js.js"}
 # doctype_list_js = {"DocType" : "public/js/doctype_list_js.js"}
@@ -19,10 +23,11 @@ app_license = "mit"
 # website_generators = ["Web Page"]
 
 # Jinja
-# jinja = {
-# 	"methods": "norwa_doc_sign.utils.jinja_methods",
-# 	"filters": "norwa_doc_sign.utils.jinja_filters"
-# }
+jinja = {
+	"methods": [
+		"norwa_doc_sign.norwa_doc_sign.utils.signatory.get_signature_overlays"
+	]
+}
 
 # Installation
 # after_install = "norwa_doc_sign.install.after_install"
@@ -48,13 +53,11 @@ app_license = "mit"
 # }
 
 # Document Events
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+	"*": {
+		"before_save": "norwa_doc_sign.norwa_doc_sign.utils.signatory.auto_fill_signatories"
+	}
+}
 
 # Scheduled Tasks
 # scheduler_events = {
