@@ -67,17 +67,26 @@ def save_positions(doctype, name, positions):
 		# Fetch the actual image for this user/type
 		sig_doc = None
 		if pos.get("type") == "Stamp":
-			# Get latest stamp for now, or could be passed from UI
+			# Get latest stamp for now
 			sig_doc = frappe.get_all("Company Stamp", limit=1, fields=["stamp_image"])
 			if sig_doc:
 				doc.signature_image = sig_doc[0].stamp_image
 		else:
-			sig_doc = frappe.get_all("Signature Selection", 
+			# Check Signature Capture first (Drawn)
+			sig_cap = frappe.get_all("Signature Capture", 
 				filters={"user": frappe.session.user, "is_default": 1},
 				fields=["signature_image"]
 			)
-			if sig_doc:
-				doc.signature_image = sig_doc[0].signature_image
+			if sig_cap:
+				doc.signature_image = sig_cap[0].signature_image
+			else:
+				# Fallback to Signature Selection (Attached)
+				sig_sel = frappe.get_all("Signature Selection", 
+					filters={"user": frappe.session.user, "is_default": 1},
+					fields=["signature_image"]
+				)
+				if sig_sel:
+					doc.signature_image = sig_sel[0].signature_image
 
 		doc.insert(ignore_permissions=True)
 	

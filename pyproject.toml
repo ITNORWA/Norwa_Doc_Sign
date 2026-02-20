@@ -1,0 +1,22 @@
+[project]
+name = "norwa_doc_sign"
+authors = [
+    { name = "Ronald (IT-Department Norwa Africa)", email = "it-department@norwaafrica.com" }
+]
+description = "Frappe app for document signing and stamping with auto-fill and draggable placement."
+requires-python = ">=3.10"
+dynamic = ["version"]
+dependencies = [
+    "frappe",
+    "Pillow"
+]
+
+[build-system]
+requires = ["flit_core >=3.4,<4"]
+build-backend = "flit_core.buildapi"
+
+[tool.flit.module]
+name = "norwa_doc_sign"
+
+[project.urls]
+Homepage = "https://github.com/ITNORWA/Norwa_Doc_Sign"
