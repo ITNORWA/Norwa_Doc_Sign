@@ -1,0 +1,114 @@
+{
+    "actions": [],
+    "autoname": "format:DSPOS-{####}",
+    "creation": "2026-02-22 12:00:00.000000",
+    "doctype": "DocType",
+    "editable_grid": 1,
+    "engine": "InnoDB",
+    "field_order": [
+        "reference_doctype",
+        "reference_name",
+        "signed_by",
+        "signing_role",
+        "signed_on",
+        "signature_type",
+        "signature_image",
+        "x_pos",
+        "y_pos",
+        "width",
+        "height",
+        "page_no"
+    ],
+    "fields": [
+        {
+            "fieldname": "reference_doctype",
+            "fieldtype": "Link",
+            "label": "Reference DocType",
+            "options": "DocType",
+            "reqd": 1
+        },
+        {
+            "fieldname": "reference_name",
+            "fieldtype": "Dynamic Link",
+            "label": "Reference Name",
+            "options": "reference_doctype",
+            "reqd": 1
+        },
+        {
+            "fieldname": "signed_by",
+            "fieldtype": "Link",
+            "label": "Signed By",
+            "options": "User"
+        },
+        {
+            "fieldname": "signing_role",
+            "fieldtype": "Select",
+            "label": "Signing Role",
+            "options": "\nRequested By\nApproved By\nProcured By\nOther"
+        },
+        {
+            "fieldname": "signed_on",
+            "fieldtype": "Datetime",
+            "label": "Signed On",
+            "read_only": 1
+        },
+        {
+            "fieldname": "signature_type",
+            "fieldtype": "Select",
+            "label": "Type",
+            "options": "Signature\nStamp"
+        },
+        {
+            "fieldname": "signature_image",
+            "fieldtype": "Attach Image",
+            "label": "Signature Image"
+        },
+        {
+            "fieldname": "x_pos",
+            "fieldtype": "Float",
+            "label": "X Position (%)"
+        },
+        {
+            "fieldname": "y_pos",
+            "fieldtype": "Float",
+            "label": "Y Position (%)"
+        },
+        {
+            "fieldname": "width",
+            "fieldtype": "Float",
+            "label": "Width (px)",
+            "default": "150"
+        },
+        {
+            "fieldname": "height",
+            "fieldtype": "Float",
+            "label": "Height (px)",
+            "default": "80"
+        },
+        {
+            "fieldname": "page_no",
+            "fieldtype": "Int",
+            "label": "Page No",
+            "default": "1"
+        }
+    ],
+    "index_web_pages_for_search": 0,
+    "links": [],
+    "modified": "2026-02-22 12:00:00.000000",
+    "modified_by": "Administrator",
+    "module": "Norwa Doc Sign",
+    "name": "Document Signature Position",
+    "owner": "Administrator",
+    "permissions": [
+        {
+            "create": 1,
+            "delete": 1,
+            "read": 1,
+            "role": "System Manager",
+            "write": 1
+        }
+    ],
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": []
+}

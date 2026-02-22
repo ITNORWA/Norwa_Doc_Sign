@@ -104,28 +104,75 @@ def auto_fill_signatories(doc, method=None):
 			doc.set(mapping.requested_at_field, now_datetime())
 
 
+def _get_signing_role(doctype, name, user):
+	"""
+	Determines the signing role of the current user for this document
+	by comparing document field values against Signatory Mapping.
+	Returns one of: 'Requested By', 'Approved By', 'Procured By', 'Other'
+	"""
+	mapping = frappe.db.get_value("Signatory Mapping", {"doctype_name": doctype}, "*", as_dict=True)
+	if not mapping:
+		return "Other"
+
+	try:
+		doc = frappe.get_doc(doctype, name)
+	except Exception:
+		return "Other"
+
+	# Check if user matches the created/requested by field
+	if mapping.get("requested_by_field") and doc.get(mapping.requested_by_field) == user:
+		return "Requested By"
+	if mapping.get("created_by_field") and doc.get(mapping.created_by_field) == user:
+		return "Requested By"
+
+	# Check approved by field
+	if mapping.get("approved_by_field") and doc.get(mapping.approved_by_field) == user:
+		return "Approved By"
+
+	# Check procured/third signer field
+	if mapping.get("procured_by_field") and doc.get(mapping.procured_by_field) == user:
+		return "Procured By"
+
+	# Default: if user created the document (owner)
+	if doc.get("owner") == user:
+		return "Requested By"
+
+	return "Other"
+
+
 @frappe.whitelist()
-def save_positions(doctype, name, positions):
+def save_positions(doctype, name, positions, signing_role=None):
 	"""
 	Saves x/y coordinates of signatures/stamps for a given document.
-	Called from the Sign Dialog UI.
+	Only deletes/replaces the CURRENT USER's positions for their signing role —
+	other signers' rows are untouched, enabling sequential multi-user signing.
 	"""
 	if isinstance(positions, str):
 		positions = json.loads(positions)
 
-	# Clear existing positions for this document
+	user = frappe.session.user
+	from frappe.utils import now_datetime as _now
+
+	# Determine this user's signing role if not supplied by the client
+	if not signing_role:
+		signing_role = _get_signing_role(doctype, name, user)
+
+	# Only clear THIS user's rows for THIS role — preserve other signers
 	frappe.db.delete("Document Signature Position", {
 		"reference_doctype": doctype,
-		"reference_name": name
+		"reference_name": name,
+		"signed_by": user,
+		"signing_role": signing_role
 	})
-
-	user = frappe.session.user
 
 	for pos in positions:
 		new_doc = frappe.get_doc({
 			"doctype": "Document Signature Position",
 			"reference_doctype": doctype,
 			"reference_name": name,
+			"signed_by": user,
+			"signing_role": signing_role,
+			"signed_on": _now(),
 			"signature_type": pos.get("type"),
 			"x_pos": pos.get("x"),
 			"y_pos": pos.get("y"),
@@ -148,24 +195,44 @@ def save_positions(doctype, name, positions):
 		new_doc.insert(ignore_permissions=True)
 
 	frappe.db.commit()
-	return "Success"
+	return {"status": "Success", "signing_role": signing_role}
 
 
 @frappe.whitelist()
-def get_user_assets(user=None):
+def get_user_assets(doctype=None, name=None):
 	"""
-	Returns the current user's signature image and available stamps.
-	Used to populate the Sign Dialog toolbox.
+	Returns current user's signature, available stamps, their signing role,
+	and all existing placed positions for the document (own + others).
+	Used to populate the Sign Dialog.
 	"""
-	user = user or frappe.session.user
-
+	user = frappe.session.user
 	sig = get_user_signature_image(user)
-
 	stamps = frappe.get_all("Company Stamp", fields=["name", "stamp_name", "stamp_image"])
+
+	signing_role = "Other"
+	my_positions = []
+	other_positions = []
+
+	if doctype and name:
+		signing_role = _get_signing_role(doctype, name, user)
+
+		all_pos = frappe.get_all(
+			"Document Signature Position",
+			filters={"reference_doctype": doctype, "reference_name": name},
+			fields=["*"]
+		)
+		for pos in all_pos:
+			if pos.get("signed_by") == user:
+				my_positions.append(pos)
+			else:
+				other_positions.append(pos)
 
 	return {
 		"signature": sig,
-		"stamps": stamps
+		"stamps": stamps,
+		"signing_role": signing_role,
+		"my_positions": my_positions,
+		"other_positions": other_positions
 	}
 
 
