@@ -5,37 +5,60 @@ import json
 
 def get_user_signature_image(user):
 	"""
-	Returns the best signature image for a user. Priority:
-	1. Employee.digital_signature (linked to the User)
+	Returns the best signature image URL for a user. Priority:
+	1. Employee.digital_signature  (set during onboarding)
 	2. Signature Capture (drawn, is_default=1)
 	3. Signature Selection (uploaded, is_default=1)
 	"""
-	# 1. Check Employee record linked to this user
-	employee = frappe.db.get_value("Employee", {"user_id": user}, "digital_signature")
-	if employee:
-		return employee
+	if not user:
+		return None
 
-	# 2. Check drawn signature
+	# 1. Employee record linked to this user
+	emp_sig = frappe.db.get_value("Employee", {"user_id": user}, "digital_signature")
+	if emp_sig:
+		return emp_sig
+
+	# 2. Drawn signature
 	sig_cap = frappe.get_all(
 		"Signature Capture",
 		filters={"user": user, "is_default": 1},
-		fields=["signature_image"],
-		limit=1
+		fields=["signature_image"], limit=1
 	)
 	if sig_cap and sig_cap[0].signature_image:
 		return sig_cap[0].signature_image
 
-	# 3. Fall back to uploaded signature
+	# 3. Uploaded signature
 	sig_sel = frappe.get_all(
 		"Signature Selection",
 		filters={"user": user, "is_default": 1},
-		fields=["signature_image"],
-		limit=1
+		fields=["signature_image"], limit=1
 	)
 	if sig_sel and sig_sel[0].signature_image:
 		return sig_sel[0].signature_image
 
 	return None
+
+
+def get_sig_image(user, width="120px", height="50px"):
+	"""
+	Jinja helper: returns an <img> tag with the user's signature, or a blank
+	dotted-line placeholder if no signature is found.
+
+	Usage in print format:
+	    {{ get_sig_image(doc.owner) }}
+	    {{ get_sig_image(doc.get("approved_by")) }}
+	"""
+	if not user:
+		return '<span style="display:inline-block;width:{w};border-bottom:1px solid #000;">&nbsp;</span>'.format(w=width)
+
+	img_url = get_user_signature_image(user)
+	if not img_url:
+		return '<span style="display:inline-block;width:{w};border-bottom:1px solid #000;">&nbsp;</span>'.format(w=width)
+
+	full_url = frappe.utils.get_url() + img_url
+	return '<img src="{url}" style="width:{w};height:{h};object-fit:contain;" class="nds-inline-sig">'.format(
+		url=full_url, w=width, h=height
+	)
 
 
 def auto_fill_signatories(doc, method=None):

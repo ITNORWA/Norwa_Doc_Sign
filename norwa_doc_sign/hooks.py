@@ -25,7 +25,8 @@ app_include_js = [
 # Jinja
 jinja = {
 	"methods": [
-		"norwa_doc_sign.utils.signatory.get_signature_overlays"
+		"norwa_doc_sign.utils.signatory.get_signature_overlays",
+		"norwa_doc_sign.utils.signatory.get_sig_image"
 	]
 }
 
