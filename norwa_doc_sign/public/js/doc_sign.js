@@ -44,6 +44,15 @@ norwa_doc_sign.SignDialog = class {
         const me = this;
         const $area = this.dialog.get_field("sign_area").$wrapper;
 
+        /* A4 at 96dpi = 794px × 1123px.
+           We display at 80% scale for the dialog, so:
+           794 * 0.8 = 635px wide, 1123 * 0.8 = 898px tall.
+           Stored coordinates are % of 794px / 1123px,
+           which maps 1:1 to mm on A4 (210mm / 297mm). */
+        const A4_W = 794, A4_H = 1123, SCALE = 0.8;
+        const canvasW = Math.round(A4_W * SCALE);
+        const canvasH = Math.round(A4_H * SCALE);
+
         const stamp_buttons = this.stamps.map(s =>
             `<button class="btn btn-sm btn-default add-stamp-btn mt-1" data-stamp="${s.name}" data-src="${s.stamp_image}" style="width:100%;">
                 <img src="${s.stamp_image}" style="max-height:28px; margin-right:4px;">
@@ -56,7 +65,7 @@ norwa_doc_sign.SignDialog = class {
             : `<p class="text-muted" style="font-size:11px;">No signature found. Upload one in Signature Selection or Employee.</p>`;
 
         $area.html(`
-            <div style="display:flex; gap:12px; height:75vh;">
+            <div style="display:flex; gap:12px; height:78vh;">
 
                 <!-- TOOLBOX -->
                 <div style="width:190px; flex-shrink:0; background:#f8f9fa; border-radius:6px; padding:12px; overflow-y:auto; border:1px solid #dee2e6;">
@@ -71,23 +80,48 @@ norwa_doc_sign.SignDialog = class {
                     ${stamp_buttons}
 
                     <hr>
-                    <p class="text-muted" style="font-size:10px; line-height:1.4;">
-                        Drag items to position.<br>Hover to resize.<br>Click ✕ to remove.
+                    <p class="text-muted" style="font-size:10px; line-height:1.5;">
+                        📐 Canvas = A4 page<br>
+                        Drag to position.<br>
+                        Resize with blue ◢ handle.<br>
+                        Click ✕ to remove.
                     </p>
                 </div>
 
-                <!-- DOCUMENT PREVIEW -->
-                <div style="flex:1; overflow:auto; background:#e9ecef; border-radius:6px; padding:16px; position:relative;">
-                    <div id="nds-print-wrapper" style="position:relative; width:210mm; min-height:297mm; background:white; margin:0 auto; box-shadow:0 2px 12px rgba(0,0,0,0.15); padding:15mm; box-sizing:border-box;">
-                        <div id="nds-print-content">
-                            <div style="text-align:center; color:#aaa; padding-top:40px;">
-                                <i class="fa fa-spinner fa-spin fa-2x"></i>
-                                <p>Loading document preview...</p>
+                <!-- DOCUMENT PREVIEW — strict A4 canvas -->
+                <div style="flex:1; overflow:auto; background:#888; border-radius:6px; padding:16px; position:relative;">
+                    <div id="nds-print-wrapper" style="
+                        position:relative;
+                        width:${canvasW}px;
+                        height:${canvasH}px;
+                        background:white;
+                        margin:0 auto;
+                        box-shadow:0 2px 16px rgba(0,0,0,0.35);
+                        overflow:hidden;
+                        transform-origin:top center;
+                    ">
+                        <!-- Content (scaled down to fit the canvas, does not affect coordinate math) -->
+                        <div id="nds-print-content" style="
+                            transform: scale(${SCALE});
+                            transform-origin: top left;
+                            width:${A4_W}px;
+                            min-height:${A4_H}px;
+                            padding: 40px;
+                            box-sizing:border-box;
+                            pointer-events:none;
+                        ">
+                            <div style="text-align:center; color:#aaa; padding-top:120px;">
+                                <span style="font-size:28px;">⏳</span>
+                                <p>Loading document preview…</p>
                             </div>
                         </div>
 
-                        <!-- Signature overlay layer (absolute children go here) -->
-                        <div id="nds-overlay-layer" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;"></div>
+                        <!-- Overlay layer: covers the full canvas, matches A4 pixel dimensions -->
+                        <div id="nds-overlay-layer" style="
+                            position:absolute; top:0; left:0;
+                            width:${canvasW}px; height:${canvasH}px;
+                            pointer-events:none;
+                        "></div>
                     </div>
                 </div>
             </div>
@@ -222,11 +256,14 @@ norwa_doc_sign.SignDialog = class {
 
     save_positions() {
         const me = this;
+
+        // A4 canvas dimensions in pixels (same constants as in _render_ui)
+        const A4_W = 794, A4_H = 1123, SCALE = 0.8;
+        const canvasW = Math.round(A4_W * SCALE);
+        const canvasH = Math.round(A4_H * SCALE);
+
         const $overlay = $("#nds-overlay-layer");
-        const $wrapper = $("#nds-print-wrapper");
-        const wOffset = $wrapper.offset();
-        const wW = $wrapper.width();
-        const wH = $wrapper.height();
+        const overlayOffset = $overlay.offset();
 
         const positions = [];
 
@@ -235,11 +272,15 @@ norwa_doc_sign.SignDialog = class {
             const opts = $el.data("opts");
             const elOffset = $el.offset();
 
+            // Position relative to overlay, then as % of the A4 canvas
+            const x_px = elOffset.left - overlayOffset.left;
+            const y_px = elOffset.top - overlayOffset.top;
+
             positions.push({
                 type: opts.type,
                 stamp_name: opts.stamp_name || null,
-                x: ((elOffset.left - wOffset.left) / wW * 100).toFixed(2),
-                y: ((elOffset.top - wOffset.top) / wH * 100).toFixed(2),
+                x: parseFloat(((x_px / canvasW) * 100).toFixed(2)),
+                y: parseFloat(((y_px / canvasH) * 100).toFixed(2)),
                 width: $el.width(),
                 height: $el.height(),
                 page_no: 1

@@ -148,24 +148,48 @@ def get_user_assets(user=None):
 
 def get_signature_overlays(doc):
 	"""
-	Returns HTML to overlay signatures/stamps on print formats.
-	Use in Jinja: {{ get_signature_overlays(doc) }}
+	Returns HTML to overlay signatures/stamps on print formats using
+	position:fixed with mm coordinates based on A4 page dimensions (210mm x 297mm).
+
+	This works correctly on ANY print format — including auto-generated and
+	minimal custom HTML formats — because it anchors to the printed page itself,
+	not to any content wrapper div.
+
+	Usage in print format Jinja:
+	    {{ get_signature_overlays(doc) }}
 	"""
+	A4_WIDTH_MM  = 210.0
+	A4_HEIGHT_MM = 297.0
+
 	positions = frappe.get_all(
 		"Document Signature Position",
 		filters={"reference_doctype": doc.doctype, "reference_name": doc.name},
 		fields=["*"]
 	)
 
-	html = '<div class="sig-overlay-wrapper" style="position: relative; width: 100%;">'
+	if not positions:
+		return ""
+
+	html = ""
 	for pos in positions:
 		if not pos.get("signature_image"):
 			continue
+
+		# Convert stored % to mm on an A4 page
+		left_mm  = round((float(pos.x_pos or 0)  / 100.0) * A4_WIDTH_MM,  2)
+		top_mm   = round((float(pos.y_pos or 0)  / 100.0) * A4_HEIGHT_MM, 2)
+		w_mm     = round((float(pos.width  or 150) / 3.7795), 2)   # px → mm (96dpi)
+		h_mm     = round((float(pos.height or 80)  / 3.7795), 2)
+
 		style = (
-			f"position: absolute; left: {pos.x_pos}%; top: {pos.y_pos}%;"
-			f"width: {pos.width or 150}px; height: {pos.height or 80}px; z-index: 100;"
+			f"position:fixed;"
+			f"left:{left_mm}mm;"
+			f"top:{top_mm}mm;"
+			f"width:{w_mm}mm;"
+			f"height:{h_mm}mm;"
+			f"z-index:9999;"
+			f"pointer-events:none;"
 		)
-		html += f'<img src="{pos.signature_image}" style="{style}" class="sig-overlay">'
-	html += "</div>"
+		html += f'<img src="{frappe.utils.get_url()}{pos.signature_image}" style="{style}" class="nds-sig-overlay">'
 
 	return html
