@@ -1,0 +1,10 @@
+[
+    {
+        "dt": "Custom Field",
+        "fieldname": "digital_signature",
+        "label": "Digital Signature",
+        "fieldtype": "Attach Image",
+        "insert_after": "personal_details",
+        "dt": "Employee"
+    }
+]

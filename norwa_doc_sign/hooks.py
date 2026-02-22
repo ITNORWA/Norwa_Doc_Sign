@@ -25,7 +25,7 @@ app_include_js = [
 # Jinja
 jinja = {
 	"methods": [
-		"norwa_doc_sign.norwa_doc_sign.utils.signatory.get_signature_overlays"
+		"norwa_doc_sign.utils.signatory.get_signature_overlays"
 	]
 }
 
@@ -52,11 +52,18 @@ jinja = {
 # 	"ToDo": "custom_app.overrides.CustomToDo"
 # }
 
+fixtures = [
+    {"dt": "Custom Field", "filters": [["fieldname", "in", ["digital_signature"]]]}
+]
+
 # Document Events
 doc_events = {
 	"*": {
-		"before_save": "norwa_doc_sign.norwa_doc_sign.utils.signatory.auto_fill_signatories"
-	}
+		"before_save": "norwa_doc_sign.utils.signatory.auto_fill_signatories"
+	},
+    "Employee": {
+        "on_update": "norwa_doc_sign.utils.image_utils.handle_employee_signature"
+    }
 }
 
 # Scheduled Tasks
